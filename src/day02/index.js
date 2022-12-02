@@ -2,7 +2,7 @@ import run from "aocrunner";
 
 const parseInput = (rawInput) => rawInput.split('\n');
 
-const names = ['Rock', 'Paper', 'Scissors'];
+// 'Rock', 'Paper', 'Scissors'    - for orientation only
 
 const score = { 
     'A X': 1 + 3,
@@ -22,9 +22,9 @@ const part1 = (rawInput) => {
 };
 
 const repair = {
-    'A X': 'A Z',
-    'A Y': 'A X',
-    'A Z': 'A Y',
+    'A X': 'A Z',   // lose
+    'A Y': 'A X',   // draw
+    'A Z': 'A Y',   // win
     'B X': 'B X',
     'B Y': 'B Y',
     'B Z': 'B Z',
@@ -35,7 +35,6 @@ const repair = {
 
 const part2 = (rawInput) => {
     const input = parseInput(rawInput);
-
     return input.reduce((acc,val) => acc + score[repair[val]], 0);
 };
 
@@ -43,10 +42,11 @@ run({
     part1: {
         tests: [
             {
-               input: `A Y
+                input: `
+A Y
 B X
 C Z`,
-              expected: 15,
+                expected: 15,
             },
         ],
         solution: part1,
@@ -54,14 +54,15 @@ C Z`,
     part2: {
         tests: [
             {
-              input: `A Y
+                input: `
+A Y
 B X
 C Z`,
-              expected: 12,
+                expected: 12,
             },
         ],
         solution: part2,
     },
     trimTestInputs: true,
-    onlyTests: false,
+    onlyTests: true,
 });
