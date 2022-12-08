@@ -2,90 +2,83 @@ import run from "aocrunner";
 
 const parseInput = (rawInput) => rawInput.split('\n').map(l=>l.split(''));
 
-const toYX = input=> {
-    const yx = [];
-    for (let y=0; y<input[0].length; y++) {
-        yx[y] = [];
-    }
-    for (let x=0; x<input.length; x++) {
-        for (let y=0; y<input[x].length; y++) {
-            yx[y][x] = input[x][y];
+const getVerticalRay = (map, x, y, dir) => {
+    const ray = [];
+    let X = x;
+    while (X > 0 && X < map.length-1) {
+        X += dir;
+        ray.push(map[X][y]);
+        if (map[X][y] >= map[x][y]) {
+            break;
         }
     }
+    return ray;
+}
+const getHorizontalRay = (map, x, y, dir) => {
+    const ray = [];
+    let Y = y;
+    while (Y > 0 && Y < map[x].length-1) {
+        Y += dir;
+        ray.push(map[x][Y]);
+        if (map[x][Y] >= map[x][y]) {
+            break;
+        }
+    }
+    return ray;
+}
 
-    return yx;
+const getRays = (map, x, y) => {
+    return {
+        up: getVerticalRay(map, x, y, -1),
+        right: getHorizontalRay(map, x, y, +1),
+        down: getVerticalRay(map, x, y, +1),
+        left: getHorizontalRay(map, x, y, -1),
+    }
+}
+
+const isVisible = (map, x, y) => {
+    const rays = getRays(map, x, y);
+    const tree = map[x][y];
+    const reverse = (a,b) => b-a;
+    // tree is bigger than the biggest one in at least one direction
+    return tree > rays.up.sort(reverse)[0] ||
+           tree > rays.right.sort(reverse)[0] ||
+           tree > rays.down.sort(reverse)[0] ||
+           tree > rays.left.sort(reverse)[0]
 }
 
 
 const part1 = (rawInput) => {
-    const input = parseInput(rawInput);
-    //console.log(input);
-    let visible = (2 * input.length) + (2 * (input[0].length-2));
-    let up, down, left, right, treeIsVisible;
-    let hiddenUp, hiddenDown, hiddenLeft, hiddenRight;
-    for (let x=1; x<input.length-1; x++) {
-        for (let y=1; y<input[x].length-1; y++) {
-            //console.log('look at', input[x][y], 'at', x+'/'+y);
-            let tree = input[x][y];
-            let treeIsVisible = true;
-            let up = x, down = x, left = y, right = y;
-            hiddenUp = false;
-            while (!hiddenUp && up>0) {
-                up--;
-                //console.log('  test up', input[up][y], 'at', up, y)
-                hiddenUp = input[x][y] <= input[up][y];
-            }
-            if (!hiddenUp) {
-                visible++;
-                //console.log('  set visible to ', visible);
-                continue;
-            }
+    const map = parseInput(rawInput);
 
-            hiddenDown = false;
-            while (!hiddenDown && down<input.length-1) {
-                down++;
-                //console.log('  test down', input[down][y], 'at', down, y)
-                hiddenDown = input[x][y] <= input[down][y];
-            }
-            if (!hiddenDown) {
+    let visible = (2 * map.length) + (2 * (map[0].length-2));
+    for (let x=1; x<map.length-1; x++) {
+        for (let y=1; y<map[x].length-1; y++) {
+            if (isVisible(map, x, y)) {
                 visible++;
-                //console.log('  set visible to ', visible);
-                continue;
             }
-
-            hiddenLeft = false;
-            while (!hiddenLeft && left>0) {
-                left--;
-                //console.log('  test left', input[x][left], 'at', x, left)
-                hiddenLeft = input[x][y] <= input[x][left];
-            }
-            if (!hiddenLeft) {
-                visible++;
-                //console.log('  set visible to ', visible);
-                continue;
-            }
-
-            hiddenRight = false;
-            while (!hiddenRight && right<input[x].length-1) {
-                right++;
-                //console.log('  test right', input[x][right], 'at', x, right)
-                hiddenRight = input[x][y] <= input[x][right];
-            }
-            if (!hiddenRight) {
-                visible++;
-                //console.log('  set visible to ', visible);
-                continue;
-            }
-
         }
     }
+
     return visible;
-};
-
+}
 const part2 = (rawInput) => {
-    const input = parseInput(rawInput);
+    const map = parseInput(rawInput);
 
-    return;
+    let highestScore = 0, currentScore = 0;
+    let rays;
+    for (let x=0; x<map.length; x++) {
+        for (let y=0; y<map[x].length; y++) {
+            rays = getRays(map, x, y);
+            currentScore = rays.up.length 
+                           * rays.right.length 
+                           * rays.down.length
+                           * rays.left.length;
+            highestScore = Math.max(currentScore, highestScore);
+        }
+    }
+
+    return highestScore;
 };
 
 run({
@@ -118,8 +111,13 @@ run({
         tests: [
             {
                 input: `
+30373
+25512
+65332
+33549
+35390
 `,
-                expected: "",
+                expected: 8,
             },
         ],
         solution: part2,
