@@ -47,7 +47,7 @@ const part2 = (rawInput) => {
     let cycle = 1;
     const processingQueue = [];
     const sigStrengths = []
-    let crt = '';
+    let crt = [];
     let cmd, val, foo, line, pos, sprite;
     while(processingQueue.length || input.length) {
         cmd = '    '; val = 0;
@@ -55,8 +55,7 @@ const part2 = (rawInput) => {
         // print at screen
         pos = crt.length % 40;
         sprite = [regX-1, regX, regX+1];
-        crt += (sprite.includes(pos)) ? '█' : ' ';
-        //console.log(cycle, regX, crt);
+        crt.push( (sprite.includes(pos)) ? 1 : 0 );
         
 
         if (processingQueue.length > 0) {
@@ -82,13 +81,33 @@ const part2 = (rawInput) => {
         cycle++;
     }
 
-    const buffer = [];
+    // small display
+    let buffer = [];
+    let c, j, x;
+    for(let x=0; x<6; x+=2) {
+        buffer.push(x + ' ');
+        for (let i=0; i<40; i++) {
+            c = ' ';
+            j = x*40 + i; 
+            if (crt[j] && crt[j+40]) c ='█';
+            if (!crt[j] && crt[j+40]) c ='▄';
+            if (!crt[j] && !crt[j+40]) c =' ';
+            if (crt[j] && !crt[j+40]) c ='▀';
+            buffer[buffer.length-1] += c;
+        }
+    }
+    console.log(buffer);
+
+    // simple large display
+    buffer = [];
     for(let i=0; i<=239; i++) {
         if (i%40 === 0) {
-            buffer.push('');
+            c = '';
+            if (i<10) c+='0';
+            if (i<100) c+='0';
+            buffer.push(c + i + ' ');
         }
-
-        buffer[buffer.length-1] += crt[i];
+        buffer[buffer.length-1] += crt[i] ? '██' : '  ';
     }
 
     console.log(buffer);
