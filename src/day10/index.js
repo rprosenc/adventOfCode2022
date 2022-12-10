@@ -1,4 +1,6 @@
 import run from "aocrunner";
+import chalk from 'chalk';
+
 
 const parseInput = (rawInput) => rawInput.split('\n');
 
@@ -93,10 +95,10 @@ const part2 = (rawInput) => {
             if (!crt[j] && crt[j+40]) c ='▄';
             if (!crt[j] && !crt[j+40]) c =' ';
             if (crt[j] && !crt[j+40]) c ='▀';
-            buffer[buffer.length-1] += c;
+            buffer[buffer.length-1] += chalk.rgb(200-i*3,20+i*4,20+i*5)(c);
         }
     }
-    console.log(buffer);
+    console.log(buffer.join('\n'));
 
     // simple large display
     buffer = [];
@@ -110,6 +112,7 @@ const part2 = (rawInput) => {
         buffer[buffer.length-1] += crt[i] ? '██' : '  ';
     }
 
+    console.log('');
     console.log(buffer);
 
     return 'RKPJBPLA'
