@@ -5,21 +5,18 @@ import Graph from "node-dijkstra";
 const parseInput = (rawInput) => rawInput.split('\n').map(l=>l.split(''));
 
 
-const part1 = (rawInput) => {
-    const input = parseInput(rawInput);
+const createGraph = (input) => {
     const graph = new Graph();
     const map = input.map(l=>{
     return l.map(c => {
-        if (c === 'S') { return 0; }    // regular fields start at 1
-        if (c === 'E') { return 27; }   // regular fields go up to 26
-        return 1 + c.charCodeAt() - 'a'.charCodeAt();  // 'a'-> 97, 'z'->122, a-a=0, z-a = 25
+        if (c === 'S') { return 0; }    // regular fields start at 0
+        if (c === 'E') { return 26; }   // regular fields go up to 25
+        return c.charCodeAt() - 'a'.charCodeAt();  // 'a'-> 97, 'z'->122, a-a=0, z-a = 25
         })
     })
 
     //const finder = new AStarFinder();
 
-    let start = '0_0';
-    let end = '0_0';
     let neighbours, nx, ny;
     const neighbourVectors = [
         {x:-1, y:0},
@@ -29,12 +26,6 @@ const part1 = (rawInput) => {
     ];
     for(let x=0; x<input.length; x++) {
         for(let y=0; y<input[x].length; y++) {
-            // find start and end coordinates
-            if (input[x][y] === 'S') {
-                start = `${x}_${y}`;
-            } else if (input[x][y] === 'E') {
-                end = `${x}_${y}`;
-            }
             // build graph. all neighbours will have the same weight, but graph is directed
             neighbours = {};
 
@@ -51,6 +42,28 @@ const part1 = (rawInput) => {
             graph.addNode(`${x}_${y}`, neighbours);
         }
     }
+    return graph;
+}
+
+const findNodes = (input, n) => {
+    const result = [];
+    for(let x=0; x<input.length; x++) {
+        for(let y=0; y<input[x].length; y++) {
+            // find start and end coordinates
+            if (input[x][y] === n) {
+                result.push(`${x}_${y}`);
+            }
+        }
+    }
+    return result;
+}
+
+
+const part1 = (rawInput) => {
+    const input = parseInput(rawInput);
+    const graph = createGraph(input);
+    const start = findNodes(input, 'S')[0];
+    const end = findNodes(input, 'E')[0];
     const path = graph.path(start, end, {cost: true});
 
     return path.cost;
@@ -58,8 +71,21 @@ const part1 = (rawInput) => {
 
 const part2 = (rawInput) => {
     const input = parseInput(rawInput);
+    const graph = createGraph(input);
+    const end = findNodes(input, 'E')[0];
+    const start = findNodes(input, 'S')[0];
+    const aNodes = findNodes(input, 'a');
+    aNodes.push(start);
+    const stepsPerPath = [];
+    aNodes.forEach(n => {
+        const path = graph.path(n, end, {cost:true});
+        if (path.cost > 0) {
+            stepsPerPath.push(path.cost);
+        }
+    })
 
-    return;
+    stepsPerPath.sort((a,b) => a-b);
+    return stepsPerPath[0];
 };
 
 run({
@@ -82,8 +108,13 @@ abdefghi
         tests: [
             {
                 input: `
+Sabqponm
+abcryxxl
+accszExk
+acctuvwj
+abdefghi
 `,
-                expected: "",
+                expected: 29,
             },
         ],
         solution: part2,
