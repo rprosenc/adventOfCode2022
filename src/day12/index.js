@@ -1,105 +1,59 @@
 import run from "aocrunner";
 import chalk from 'chalk';
-import AStarFinder from 'pathfinding';
+import Graph from "node-dijkstra";
 
 const parseInput = (rawInput) => rawInput.split('\n').map(l=>l.split(''));
 
 
-const printMap = (input, visited, x, y) => {
-    let line;
-    console.log('')
-    for(let i=0; i<visited.length; i++) {
-        line = i + ' ';
-        for(let j=0; j<visited[i].length; j++) {
-            if (input[i][j] === 'E') {
-                if (x===i && y===j) {
-                    line += chalk.red.bold(' E');
-                } else {
-                    line += chalk.green.bold(' E');
-                }
-            } else if (x===i && y===j) {
-                line += chalk.red.bold(' ' + input[i][j]);
-            } else if (visited[i][j] === 1){
-                line += chalk.white.bold(' ' + input[i][j]);
-            } else {
-                line += chalk.gray(' ' + input[i][j]);
-            }
-        }
-        console.log(line);
-    }
-}
-
-
 const part1 = (rawInput) => {
     const input = parseInput(rawInput);
-    let found = false;
-
-    const recurse = (x, y, depth, visited) => {
-            // undisciplinned use of variables...
-            visited[x][y] = 1;   // mark field, to never again step on it
-            printMap(input, visited, x, y);
-
-            const moves = possibleMoves[x][y];
-            //console.log({x,y,depth, moves});
-            let move;
-            for (let i=0; i<moves.length; i++) {
-                move = moves[i];
-                //console.log('   move: ', move);
-                if (!visited[ move.x ][ move.y ] && depth < 10000) {
-                    if (map[move.x][move.y] === 26) {
-                        found = true;
-                        console.log('FOUND SHIT');
-                        return depth+1;
-                    }
-                    if (!found) depth = recurse(move.x, move.y, depth+1, visited.map(line=>line.map(c=>c)));
-                }
-            }
-            return depth;
-    }
-
+    const graph = new Graph();
     const map = input.map(l=>{
-        return l.map(c => {
-            if (c === 'S') { return c; }
-            if (c === 'E') { return 26; }
-            return c.charCodeAt() - 'a'.charCodeAt();
-            })
+    return l.map(c => {
+        if (c === 'S') { return 0; }    // regular fields start at 1
+        if (c === 'E') { return 27; }   // regular fields go up to 26
+        return 1 + c.charCodeAt() - 'a'.charCodeAt();  // 'a'-> 97, 'z'->122, a-a=0, z-a = 25
         })
-    const possibleMoves = [];
-    const visited = [];
-    let p, n;
-    const moves = [{x:-1, y:0}, {x:1, y:0}, {x:0, y:-1}, {x: 0, y:1}];
-    let targets, end;
-    for(let x = 0; x<map.length; x++) {
-        possibleMoves.push([]); // list for y
-        visited.push([]);
-        for(let y = 0; y<map[x].length; y++) {
-            possibleMoves[x].push([]); // list for x/y moves
-            visited[x].push(0);
-            p = map[x][y];
-            if (p === 'S') {
-                p = 0;
-            }
-            if (p === 'E') {
-                p = 26;
-            }
+    })
 
-            targets = moves
-                        .map(m=>{return {x: x+m.x, y: y+m.y, }})
-                        .filter(m => m.x>=0 && m.x<map.length && m.y>=0 && m.y<map[m.x].length)
-                        .map(m => { return {x: m.x, y: m.y, n: map[m.x][m.y], p}})
-                        .filter(m => m.n <= m.p+1)
-                        .sort((a,b)=>b.n-a.n);
-            // check for end
-            end = targets.filter(m=>map[m.x][m.y]===26);
-            if (end.length) {
-                end[0].n = 26;
-                possibleMoves[x][y] = [end[0]];
-            } else {
-                possibleMoves[x][y] = targets;
+    //const finder = new AStarFinder();
+
+    let start = '0_0';
+    let end = '0_0';
+    let neighbours, nx, ny;
+    const neighbourVectors = [
+        {x:-1, y:0},
+        {x:+1, y:0},
+        {x:0, y:-1},
+        {x:0, y:+1},
+    ];
+    for(let x=0; x<input.length; x++) {
+        for(let y=0; y<input[x].length; y++) {
+            // find start and end coordinates
+            if (input[x][y] === 'S') {
+                start = `${x}_${y}`;
+            } else if (input[x][y] === 'E') {
+                end = `${x}_${y}`;
             }
+            // build graph. all neighbours will have the same weight, but graph is directed
+            neighbours = {};
+
+            neighbourVectors.forEach(v => {
+                const nx = x+v.x;
+                const ny = y+v.y;
+                // handle only valid coordinates
+                if (nx>=0 && ny>=0 && nx<input.length && ny<input[x].length) {
+                    if (map[nx][ny] - map[x][y] <= 1) {
+                        neighbours[`${nx}_${ny}`] = 1;
+                    }
+                }
+            });
+            graph.addNode(`${x}_${y}`, neighbours);
         }
     }
-    return recurse(0,0,0, visited);
+    const path = graph.path(start, end, {cost: true});
+
+    return path.cost;
 };
 
 const part2 = (rawInput) => {
@@ -111,18 +65,6 @@ const part2 = (rawInput) => {
 run({
     part1: {
         tests: [
-            /*
-            {
-                input: `
-Saxqponm
-xbcryxxl
-xxcszExk
-xxctuvwj
-xxdefghi
-`,
-                expected: 31,
-            },
-            */
             {
                 input: `
 Sabqponm
@@ -147,5 +89,5 @@ abdefghi
         solution: part2,
     },
     trimTestInputs: true,
-    onlyTests: 1,
+    onlyTests: 0,
 });
